@@ -6,6 +6,7 @@ mod sphere;
 mod vec3;
 mod interval;
 mod camera;
+mod utility;
 
 use sphere::Sphere;
 use vec3::Vector3;
@@ -22,6 +23,6 @@ fn main() {
         100.0,
     )));
 
-    let cam = Camera::new(16.0 / 9.0, 1280);
+    let cam = Camera::new(16.0 / 9.0, 1280, 100);
     cam.render(&world);
 }

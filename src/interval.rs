@@ -25,15 +25,19 @@ impl Interval {
         Interval { min: INF, max: -INF }
     }
 
-    pub fn size(&self) -> f64 {
+    pub const fn size(&self) -> f64 {
         self.max - self.min
     }
 
-    pub fn contains(&self, x: f64) -> bool {
+    pub const fn contains(&self, x: f64) -> bool {
         self.min <= x && x <= self.max
     }
 
-    pub fn surrounds(&self, x: f64) -> bool {
+    pub const fn surrounds(&self, x: f64) -> bool {
         self.min < x && x <= self.max
+    }
+
+    pub const fn clamp(&self, x: f64) -> f64 {
+        x.min(self.max).max(self.min)
     }
 }
