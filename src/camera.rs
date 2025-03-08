@@ -13,19 +13,21 @@ use std::path::Path;
 pub struct Camera {
     pub aspect_ratio: f64,
     pub image_width: u32,
-
     image_height: u32,
-    samples_per_pixel: u32,
 
+    samples_per_pixel: u32,
     pixel_samples_scale: f64,
+    max_depth: u32,
+
     center: Vector3,
+    
     pixel00_loc: Vector3,
     pixel_delta_u: Vector3,
     pixel_delta_v: Vector3,
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32) -> Self {
+    pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32, max_depth: u32) -> Self {
         let height = ((image_width as f64 / aspect_ratio) as u32).max(1);
 
         let focal_length = 1.0;
@@ -49,9 +51,13 @@ impl Camera {
             aspect_ratio: aspect_ratio,
             image_width: image_width,
             image_height: height,
+
             samples_per_pixel: samples_per_pixel,
             pixel_samples_scale: 1.0 / samples_per_pixel as f64,
+            max_depth: max_depth,
+
             center: camera_center,
+            
             pixel00_loc: pixel00_loc,
             pixel_delta_u: pixel_delta_u,
             pixel_delta_v: pixel_delta_v,
@@ -70,7 +76,7 @@ impl Camera {
 
             for _ in 0..self.samples_per_pixel as i32 {
                 let r = self.get_ray(i, j);
-                color = color + self.ray_color(&r, world);
+                color = color + self.ray_color(&r, self.max_depth, world);
             }
             color = color * self.pixel_samples_scale;
 
@@ -109,12 +115,16 @@ impl Camera {
         Vector3::new(r * theta.cos(), r * theta.sin(), 0.0)
     }
 
-    fn ray_color<T: hittable::Hittable>(&self, r: &Ray, world: &T) -> Vector3 {
+    fn ray_color<T: hittable::Hittable>(&self, r: &Ray, depth: u32, world: &T) -> Vector3 {
+        if depth <= 0 {
+            return Vector3::new(0.0, 0.0, 0.0);
+        }
+        
         let mut rec = hittable::HitRecord::default();
 
         if world.hit(r, Interval::new(0.0, INF), &mut rec) {
             let direction = Vector3::random_on_hemisphere(&rec.normal);
-            return 0.5 * self.ray_color(&Ray::new(rec.p, direction), world);
+            return 0.5 * self.ray_color(&Ray::new(rec.p, direction), depth-1, world);
         }
 
         let unit_dir = r.direction().normalized();

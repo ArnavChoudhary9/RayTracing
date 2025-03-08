@@ -23,6 +23,6 @@ fn main() {
         100.0,
     )));
 
-    let cam = Camera::new(16.0 / 9.0, 640, 50);
+    let cam = Camera::new(16.0 / 9.0, 400, 100, 50);
     cam.render(&world);
 }
