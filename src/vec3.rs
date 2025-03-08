@@ -1,5 +1,8 @@
 use std::ops::{Index, IndexMut};
 
+use crate::utility::random_double;
+use crate::utility::random_double_range;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vector3 {
     pub e: [f64; 3],
@@ -15,6 +18,39 @@ impl Vector3 {
         Vector3 { e: [0.0, 0.0, 0.0] }
     }
 
+    pub fn random() -> Self {
+        Vector3::new(
+            random_double(),
+            random_double(),
+            random_double(),
+        )
+    }
+
+    pub fn random_range(min: f64, max: f64) -> Self {
+        Vector3::new(
+            random_double_range(min, max),
+            random_double_range(min, max),
+            random_double_range(min, max)
+        )
+    }
+
+    pub fn random_unit_vector() -> Self {
+        loop {
+            let v = Vector3::random_range(-1.0, 1.0);
+            if 1e-160 < v.squared_length() && v.squared_length() <= 1.0 {
+                return v.normalized();
+            }
+        }
+    }
+
+    pub fn random_on_hemisphere(normal: &Vector3) -> Self {
+        let on_unit_sphere = Self::random_unit_vector();
+        if normal.dot(&on_unit_sphere) > 0.0 {
+            return on_unit_sphere;
+        }
+        -on_unit_sphere
+    }
+
     // Components
     pub fn x(&self) -> f64 { self.e[0] }
     pub fn y(&self) -> f64 { self.e[1] }
@@ -27,11 +63,11 @@ impl Vector3 {
         self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
     }
 
-    pub fn dot(&self, other: &Vector3) -> f64 {
+    pub fn dot(&self, other: &Self) -> f64 {
         self.e[0] * other.e[0] + self.e[1] * other.e[1] + self.e[2] * other.e[2]
     }
 
-    pub fn cross(&self, other: &Vector3) -> Vector3 {
+    pub fn cross(&self, other: &Self) -> Self {
         Vector3::new(
             self.e[1] * other.e[2] - self.e[2] * other.e[1],
             self.e[2] * other.e[0] - self.e[0] * other.e[2],
@@ -39,7 +75,7 @@ impl Vector3 {
         )
     }
 
-    pub fn normalized(&self) -> Vector3 {
+    pub fn normalized(&self) -> Self {
         let length = self.lenght();
         *self / length
     }

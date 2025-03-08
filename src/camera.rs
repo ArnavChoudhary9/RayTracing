@@ -1,12 +1,13 @@
-use crate::vec3::Vector3;
-use crate::image_handler;
 use crate::hittable;
-use crate::ray::Ray;
+use crate::image_handler;
 use crate::interval::Interval;
+use crate::ray::Ray;
 use crate::utility;
 use crate::utility::INF;
+use crate::vec3::Vector3;
 
 use image::Rgb;
+use std::f64;
 use std::path::Path;
 
 pub struct Camera {
@@ -15,7 +16,7 @@ pub struct Camera {
 
     image_height: u32,
     samples_per_pixel: u32,
-    
+
     pixel_samples_scale: f64,
     center: Vector3,
     pixel00_loc: Vector3,
@@ -83,13 +84,10 @@ impl Camera {
     }
 
     fn get_ray(&self, i: u32, j: u32) -> Ray {
-        let offset = self.sample_square();
-        // let pixel_sample = self.pixel00_loc
-        //                           + ((i as f64 * offset.x()) * self.pixel_delta_u)
-        //                           + ((j as f64 * offset.y()) * self.pixel_delta_v);
+        let offset = self.sample_disk();
         let pixel_sample = self.pixel00_loc
-                                  + ((i as f64 + offset.x()) * self.pixel_delta_u)
-                                  + ((j as f64 + offset.y()) * self.pixel_delta_v);
+            + ((i as f64 + offset.x()) * self.pixel_delta_u)
+            + ((j as f64 + offset.y()) * self.pixel_delta_v);
 
         let origin = self.center;
         let direction = pixel_sample - origin;
@@ -101,17 +99,24 @@ impl Camera {
         Vector3::new(
             utility::random_double() - 0.5,
             utility::random_double() - 0.5,
-            0.0
+            0.0,
         )
+    }
+
+    fn sample_disk(&self) -> Vector3 {
+        let r = utility::random_double().sqrt();
+        let theta = utility::random_double_range(0.0, f64::consts::TAU);
+        Vector3::new(r * theta.cos(), r * theta.sin(), 0.0)
     }
 
     fn ray_color<T: hittable::Hittable>(&self, r: &Ray, world: &T) -> Vector3 {
         let mut rec = hittable::HitRecord::default();
-    
+
         if world.hit(r, Interval::new(0.0, INF), &mut rec) {
-            return 0.5 * (rec.normal + Vector3::new(1.0, 1.0, 1.0));
+            let direction = Vector3::random_on_hemisphere(&rec.normal);
+            return 0.5 * self.ray_color(&Ray::new(rec.p, direction), world);
         }
-    
+
         let unit_dir = r.direction().normalized();
         let a = 0.5 * (unit_dir.y() + 1.0);
         (1.0 - a) * Vector3::new(1.0, 1.0, 1.0) + a * Vector3::new(0.5, 0.7, 1.0)
