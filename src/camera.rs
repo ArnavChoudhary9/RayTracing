@@ -66,7 +66,7 @@ impl Camera {
 
     pub fn render<T: hittable::Hittable>(&self, world: &T) {
         let black = Rgb([0.0f64, 0.0, 0.0]);
-        let mut img = image_handler::Image::new(self.image_width, self.image_height, black);
+        let mut img = image_handler::Image::new(self.image_width, self.image_height, black, true);
 
         // Draw gradient using mutable enumeration
         for (i, j, pixel) in img.enumerate_pixels() {
@@ -122,9 +122,9 @@ impl Camera {
         
         let mut rec = hittable::HitRecord::default();
 
-        if world.hit(r, Interval::new(0.0, INF), &mut rec) {
-            let direction = Vector3::random_on_hemisphere(&rec.normal);
-            return 0.5 * self.ray_color(&Ray::new(rec.p, direction), depth-1, world);
+        if world.hit(r, Interval::new(0.001, INF), &mut rec) {
+            let direction = rec.normal + Vector3::random_unit_vector();
+            return 0.05 * self.ray_color(&Ray::new(rec.p, direction), depth-1, world);
         }
 
         let unit_dir = r.direction().normalized();

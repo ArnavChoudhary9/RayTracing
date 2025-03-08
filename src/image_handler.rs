@@ -7,15 +7,17 @@ pub struct Image {
     width: u32,
     height: u32,
     pixels: Vec<Rgb<f64>>, // Stores RGB values
+    to_srgb: bool,
 }
 
 impl Image {
     /// Create a new image with given dimensions
-    pub fn new(width: u32, height: u32, defalut_color: Rgb<f64>) -> Self {
+    pub fn new(width: u32, height: u32, defalut_color: Rgb<f64>, to_srgb: bool) -> Self {
         Image {
             width,
             height,
             pixels: vec![defalut_color; (width * height) as usize],
+            to_srgb,
         }
     }
 
@@ -48,13 +50,24 @@ impl Image {
 
     /// Save the image to a file
     pub fn save(&self, path: &Path) -> Result<(), image::ImageError> {
-        let buffer: Vec<u8> = self.pixels
+        let buffer: Vec<u8>;
+        
+        if self.to_srgb {
+            buffer = self.pixels
+            .iter()
+            .flat_map(|p| p.0.iter().map(|&v| {
+                (v.clamp(0.0, 1.0).powf(1.0/2.2) * 255.0).round() as u8
+            }))
+            .collect();
+        } else {
+            buffer = self.pixels
             .iter()
             .flat_map(|p| p.0.iter().map(|&v| {
                 (v.clamp(0.0, 1.0) * 255.0).round() as u8
             }))
             .collect();
-        
+        }
+
         save_buffer(
             Path::new(path),
             &buffer,
